@@ -74,6 +74,8 @@ private:
 
 //!	Global nodal force/displacement vector
 	double* Force;
+// 问题维度
+	unsigned int Dimension;
 
 private:
 
@@ -155,5 +157,8 @@ public:
 
 //!	Return pointer to the banded stiffness matrix
 	inline CSkylineMatrix<double>* GetStiffnessMatrix() { return StiffnessMatrix; }
+
+//! Return the dimension of the problem
+	inline unsigned int GetDimension() { return Dimension; }
 
 };
