@@ -31,3 +31,19 @@ void CBarMaterial::Write(COutputter& output)
 {
 	output << setw(16) << E << setw(16) << Area << endl;
 }
+
+
+bool Q4Material::Read(ifstream& Input)
+{
+	Input >> nset;	// Number of property set
+
+	Input >> E >> thickness >> Poisson;	// Young's modulus and section area and Poisson's ratio
+
+	return true;
+}
+
+//	Write material data to Stream
+void Q4Material::Write(COutputter& output)
+{
+	output << setw(16) << E << setw(16) << thickness << setw(16) << Poisson << endl;
+}
