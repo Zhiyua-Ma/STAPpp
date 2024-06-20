@@ -24,6 +24,8 @@ public:
 	
 	double E;  //!< Young's modulus
 
+
+
 public:
 
 //! Virtual deconstructor
@@ -50,5 +52,23 @@ public:
 	virtual bool Read(ifstream& Input);
 
 //!	Write material data to Stream
+	virtual void Write(COutputter& output);
+};
+
+
+class Q4Material : public CMaterial
+{
+public:
+
+	double thickness;	//!< 单元厚度
+
+	double Poisson; //泊松比
+
+public:
+
+	//!	Read material data from stream Input
+	virtual bool Read(ifstream& Input);
+
+	//!	Write material data to Stream
 	virtual void Write(COutputter& output);
 };
