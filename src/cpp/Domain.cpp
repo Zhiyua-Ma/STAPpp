@@ -39,6 +39,7 @@ CDomain::CDomain()
 	LoadCases = nullptr;
 	
 	NEQ = 0;
+    Dimension = 3;
 
 	Force = nullptr;
 	StiffnessMatrix = nullptr;
@@ -78,14 +79,14 @@ bool CDomain::ReadData(string FileName, string OutFile)
 		exit(3);
 	}
 
-	COutputter* Output = COutputter::GetInstance(OutFile);
+	COutputter* Output = COutputter::GetInstance(OutFile);//调用outputter的单例对象
 
 //	Read the heading line
 	Input.getline(Title, 256);
 	Output->OutputHeading();
 
 //	Read the control line
-	Input >> NUMNP >> NUMEG >> NLCASE >> MODEX;
+    Input >> NUMNP >> NUMEG >> NLCASE >> MODEX >> Dimension;
 
 //	Read nodal point data
 	if (ReadNodalPoints())
@@ -116,7 +117,7 @@ bool CDomain::ReadData(string FileName, string OutFile)
 bool CDomain::ReadNodalPoints()
 {
 
-//	Read nodal point data lines
+//	Read nodal point data lines 对象数组
 	NodeList = new CNode[NUMNP];
 
 //	Loop over for all nodal points
@@ -125,7 +126,7 @@ bool CDomain::ReadNodalPoints()
 		if (!NodeList[np].Read(Input))
 			return false;
     
-        if (NodeList[np].NodeNumber != np + 1)
+        if (NodeList[np].NodeNumber != np + 1)//检查节点是否顺序输入
         {
             cerr << "*** Error *** Nodes must be inputted in order !" << endl
             << "   Expected node number : " << np + 1 << endl
@@ -144,9 +145,9 @@ void CDomain::CalculateEquationNumber()
 	NEQ = 0;
 	for (unsigned int np = 0; np < NUMNP; np++)	// Loop over for all node
 	{
-		for (unsigned int dof = 0; dof < CNode::NDF; dof++)	// Loop over for DOFs of node np
+		for (unsigned int dof = 0; dof < GetNodeList()[0].NDF; dof++)	// Loop over for DOFs of node np
 		{
-			if (NodeList[np].bcode[dof]) 
+			if (NodeList[np].bcode[dof]) //非零则设为0
 				NodeList[np].bcode[dof] = 0;
 			else
 			{
@@ -161,7 +162,7 @@ void CDomain::CalculateEquationNumber()
 bool CDomain::ReadLoadCases()
 {
 //	Read load data lines
-	LoadCases = new CLoadCaseData[NLCASE];	// List all load cases
+	LoadCases = new CLoadCaseData[NLCASE];	// List all load cases可以定义数个工况（工况数NLCASE）
 
 //	Loop over for all load cases
 	for (unsigned int lcase = 0; lcase < NLCASE; lcase++)
