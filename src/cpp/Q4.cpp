@@ -80,15 +80,15 @@ void CQ4::ElementStiffness(double* Matrix)
 	double y3 = nodes_[2]->XYZ[1];
 	double x4 = nodes_[3]->XYZ[0];
 	double y4 = nodes_[3]->XYZ[1];
-	// det(jacobian) ÖĞĞÄµã
+	// det(jacobian) ä¸­å¿ƒç‚¹
 	double JE00 = ((x2 + x3 - x1 - x4) * (y4 + y3 - y1 - y2) - (x4 + x3 - x1 - x2) * (y2 + y3 - y1 - y4)) / 16;
 	double JEinv00[4];
-	JEinv00[0] = 0.25 * (y4 + y3 - y2 - y1) / JE00;//jacobianÄæ¾ØÕó×óÉÏ
-	JEinv00[1] = 0.25 * (y1 + y4 - y2 - y3) / JE00;//jacobianÄæ¾ØÕóÓÒÉÏ
-	JEinv00[2] = 0.25 * (x1 + x2 - x3 - x4) / JE00;//jacobianÄæ¾ØÕó×óÏÂ
-	JEinv00[3] = 0.25 * (x2 + x3 - x1 - x4) / JE00;//jacobianÄæ¾ØÕóÓÒÏÂ
+	JEinv00[0] = 0.25 * (y4 + y3 - y2 - y1) / JE00;//jacobiané€†çŸ©é˜µå·¦ä¸Š
+	JEinv00[1] = 0.25 * (y1 + y4 - y2 - y3) / JE00;//jacobiané€†çŸ©é˜µå³ä¸Š
+	JEinv00[2] = 0.25 * (x1 + x2 - x3 - x4) / JE00;//jacobiané€†çŸ©é˜µå·¦ä¸‹
+	JEinv00[3] = 0.25 * (x2 + x3 - x1 - x4) / JE00;//jacobiané€†çŸ©é˜µå³ä¸‹
 	
-	//ĞÎº¯Êıµ¼ÊıN1x,N2x,N3x,N4x,N1y,N2y,N3y,N4y
+	//å½¢å‡½æ•°å¯¼æ•°N1x,N2x,N3x,N4x,N1y,N2y,N3y,N4y
 	Nixy[0] = -JEinv00[0] - JEinv00[1];
 	Nixy[1] = JEinv00[0] - JEinv00[1];
 	Nixy[2] = -Nixy[0];
@@ -105,16 +105,16 @@ void CQ4::ElementStiffness(double* Matrix)
 	double P2 = (1 - P1) / 2;
 	double P3 = (1 + P1) / 2;
 
-	if (intnum == 1)//ÍêÈ«»ı·Ö
+	if (intnum == 1)//å®Œå…¨ç§¯åˆ†
 	{
-		for (int j = 0; j < 36; j++) //³õÊ¼»¯
+		for (int j = 0; j < 36; j++) //åˆå§‹åŒ–
 			Matrix[j] = 0;
-		//2*2 Gauss»ı·Öµã
+		//2*2 Gaussç§¯åˆ†ç‚¹
 		double ksi[4] = { -0.5773502692, 0.5773502692, -0.5773502692, 0.5773502692 };
 		double eta[4] = { 0.5773502692, 0.5773502692, -0.5773502692, -0.5773502692 };
 		for (int i = 0; i < 4; i++)
 		{
-			// Çó½âJacobian¾ØÕóĞĞÁĞÊ½ºÍÄæ
+			// æ±‚è§£JacobiançŸ©é˜µè¡Œåˆ—å¼å’Œé€†
 			double JE[4];
 			double JEinv[4];
 			JE[0] = (x2 - x1) * (1 - eta[i]) - (x4 - x3) * (1 + eta[i]);
@@ -126,7 +126,7 @@ void CQ4::ElementStiffness(double* Matrix)
 			JEinv[1] = -0.25 * JE[1] / detJE;
 			JEinv[2] = -0.25 * JE[2] / detJE;
 			JEinv[3] = 0.25 * JE[0] / detJE;
-			// NiÀàËÆÓÚNixy,µ«²»ÊÇÈ«¾ÖµÄ
+			// Niç±»ä¼¼äºNixy,ä½†ä¸æ˜¯å…¨å±€çš„
 			double Ni[8];
 			Ni[0] = (JEinv[0] * (eta[i] - 1) + JEinv[1] * (ksi[i] - 1)) / 4;
 			Ni[1] = (JEinv[0] * (1 - eta[i]) + JEinv[1] * (-ksi[i] - 1)) / 4;
@@ -137,10 +137,10 @@ void CQ4::ElementStiffness(double* Matrix)
 			Ni[6] = (JEinv[2] * (eta[i] + 1) + JEinv[3] * (ksi[i] + 1)) / 4;
 			Ni[7] = (JEinv[2] * (-eta[i] - 1) + JEinv[3] * (1 - ksi[i])) / 4;
 
-			//Gauss »ı·ÖÇ°ÃæµÄÏµÊı
-			double correctionfactor = detJE * material_->thickness * material_->E / (1 - P1 * P1);//ÍêÈ«»ı·ÖÏµÊıÎª1
+			//Gauss ç§¯åˆ†å‰é¢çš„ç³»æ•°
+			double correctionfactor = detJE * material_->thickness * material_->E / (1 - P1 * P1);//å®Œå…¨ç§¯åˆ†ç³»æ•°ä¸º1
 
-			Matrix[0] += (Ni[0] * Ni[0] + P2 * Ni[0] * Ni[0]) * correctionfactor;
+			Matrix[0] += (Ni[0] * Ni[0] + P2 * Ni[4] * Ni[4]) * correctionfactor;
 			Matrix[1] += (Ni[4] * Ni[4] + P2 * Ni[0] * Ni[0]) * correctionfactor;
 			Matrix[2] += (P3 * Ni[0] * Ni[4]) * correctionfactor;
 			Matrix[3] += (Ni[1] * Ni[1] + P2 * Ni[5] * Ni[5]) * correctionfactor;
@@ -178,14 +178,14 @@ void CQ4::ElementStiffness(double* Matrix)
 			Matrix[35] += (P1 * Ni[0] * Ni[7] + P2 * Ni[4] * Ni[3]) * correctionfactor;
 		}
 	}
-	else //¼õËõ»ı·Ö
+	else //å‡ç¼©ç§¯åˆ†
 	{
 		if (intnum != 0)
 			std::cerr << "Element intnum not correct, Default intnum = 0, Calculation continue" << std::endl;
 				
-		double correctionfactor = 4 * JE00 * material_->thickness * material_->E / (1 - P1 * P1);//¼õËõ»ı·ÖÏµÊıÎª4
+		double correctionfactor = 4 * JE00 * material_->thickness * material_->E / (1 - P1 * P1);//å‡ç¼©ç§¯åˆ†ç³»æ•°ä¸º4
 
-		Matrix[0] = Nixy[0] * Nixy[0] + P2 * Nixy[0] * Nixy[0];
+		Matrix[0] = Nixy[0] * Nixy[0] + P2 * Nixy[4] * Nixy[4];
 		Matrix[1] = Nixy[4] * Nixy[4] + P2 * Nixy[0] * Nixy[0];
 		Matrix[2] = P3 * Nixy[0] * Nixy[4];
 		Matrix[3] = Nixy[1] * Nixy[1] + P2 * Nixy[5] * Nixy[5];
@@ -231,17 +231,17 @@ void CQ4::ElementStiffness(double* Matrix)
 void CQ4::ElementStress(double* stress, double* Displacement)
 {
 	Q4Material* material_ = dynamic_cast<Q4Material*>(ElementMaterial_);	// Pointer to material of the element
-	// Q4µ¥Ôª4¸ö½áµãµÄxyÎ»ÒÆ
+	// Q4å•å…ƒ4ä¸ªç»“ç‚¹çš„xyä½ç§»
 	double d[8];
 	for (int i = 0; i < 8; i++)
 	{
 		if (LocationMatrix_[i] == 0)
 			d[i] = 0.0;
 		else
-			d[i] = Displacement[LocationMatrix_[i] - 1];//-1²Î¿¼CDomain::CalculateEquationNumber
+			d[i] = Displacement[LocationMatrix_[i] - 1];//-1å‚è€ƒCDomain::CalculateEquationNumber
 	}
 	double P1 = material_->Poisson;
-	//×î¼ÑÓ¦Á¦µãÓ¦Á¦sigma_x,sigma_y,gamma_xy
+	//æœ€ä½³åº”åŠ›ç‚¹åº”åŠ›sigma_x,sigma_y,gamma_xy
 	stress[0] = material_->E / (1 - P1 * P1) * (Nixy[0] * d[0] + P1 * Nixy[4] * d[1] + Nixy[1] * d[2] + P1 * Nixy[5] * d[3] + Nixy[2] * d[4] + P1 * Nixy[6] * d[5] + Nixy[3] * d[6] + P1 * Nixy[7] * d[7]);
 	stress[1] = material_->E / (1 - P1 * P1) * (P1 * Nixy[0] * d[0] + Nixy[4] * d[1] + P1 * Nixy[1] * d[2] + Nixy[5] * d[3] + P1 * Nixy[2] * d[4] + Nixy[6] * d[5] + P1 * Nixy[3] * d[6] + Nixy[7] * d[7]);
 	stress[2] = material_->E / (2 + 2 * P1) * (Nixy[4] * d[0] + Nixy[0] * d[1] + Nixy[5] * d[2] + Nixy[1] * d[3] + Nixy[6] * d[4] + Nixy[2] * d[5] + Nixy[7] * d[6] + Nixy[3] * d[7]);
