@@ -10,96 +10,98 @@
 
 #pragma once
 
-#include "Node.h"
-#include "Material.h"
-
+#include <fstream>
+#include <iostream>
+#include <iomanip>
 
 using namespace std;
 
-template <class type> void clear( type* a, unsigned int N );	// Clear an array
-
-//!	Element base class
-/*!	All type of element classes should be derived from this base class */
-class CElement
+//! Outputer class is used to output results
+class COutputter
 {
-protected:
+private:
 
-//!	Number of nodes per element
-	unsigned int NEN_;
+//!	File stream for output
+	ofstream OutputFile;
 
-//!	Nodes of the element
-	CNode** nodes_;
+//!	Designed as a single instance class
+	static COutputter* _instance;
 
-//!	Material of the element
-	CMaterial* ElementMaterial_;	//!< Pointer to an element of MaterialSetList[][]
-    
-//! Location Matrix of the element
-    unsigned int* LocationMatrix_;
-
-//! Dimension of the location matrix
-    unsigned int ND_;
+//! Constructor
+    COutputter(string FileName);
 
 public:
 
-//!	Constructor
-	CElement() : NEN_(0), nodes_(nullptr), ElementMaterial_(nullptr) {}
+//!	Return pointer to the output file stream
+	inline ofstream* GetOutputFile() { return &OutputFile; }
 
-//! Virtual deconstructor
-    virtual ~CElement() {
-        if (nodes_)
-            delete [] nodes_;
-        
-        if (ElementMaterial_)
-            delete [] ElementMaterial_;
-        
-        if (LocationMatrix_)
-            delete [] LocationMatrix_;
-    }
+//!	Return the single instance of the class
+	static COutputter* GetInstance(string FileName = " ");
 
-//!	Read element data from stream Input
-	virtual bool Read(ifstream& Input, CMaterial* MaterialSets, CNode* NodeList) = 0;
+//!	Output current time and date
+	void PrintTime(const struct tm * ptm, COutputter& output);
 
-//!	Write element data to stream
-	virtual void Write(COutputter& output) = 0;
+//!	Output logo and heading 
+	void OutputHeading();
 
-//! Generate location matrix: the global equation number that corresponding to each DOF of the element
-//	Caution:  Equation number is numbered from 1 !
-    virtual void GenerateLocationMatrix()
-    {      
-        unsigned int i = 0;
-        for (unsigned int N = 0; N < NEN_; N++)
-            for (unsigned int D = 0; D < 3; D++)
-                LocationMatrix_[i++] = nodes_[N]->bcode[D];
-    }
+//!	Output nodal point data
+	void OutputNodeInfo();
 
-//! Return the size of the element stiffness matrix (stored as an array column by column)
-    virtual unsigned int SizeOfStiffnessMatrix()
-    {
-        unsigned int size = 0;
-        for (int i=1; i<= ND_; i++)
-            size += i;
-        
-        return size;
-    }
+//!	Output equation numbers
+	void OutputEquationNumber();
 
-//!	Calculate element stiffness matrix (Upper triangular matrix, stored as an array column by colum)
-	virtual void ElementStiffness(double* stiffness) = 0; 
+//!	Output element data
+	void OutputElementInfo();
 
-//!	Calculate element stress 
-	virtual void ElementStress(double* stress, double* Displacement) = 0;
+//! Output Q4 element data
+	void OutputQ4Elements(unsigned int EleGrp);
 
-//! Return number of nodes per element
-    inline unsigned int GetNEN() { return NEN_; }
-    
-//!	Return nodes of the element
-	inline CNode** GetNodes() { return nodes_; }
+//!	Output bar element data
+	void OutputBarElements(unsigned int EleGrp);
 
-//!	Return material of the element
-	inline CMaterial* GetElementMaterial() { return ElementMaterial_; }
-    
-    //! Return the Location Matrix of the element
-    inline unsigned int* GetLocationMatrix() { return LocationMatrix_; }
-    
-    //! Return the dimension of the location matrix
-    inline unsigned int GetND() { return ND_; }
+//!	Output load data 
+	void OutputLoadInfo(); 
+
+//!	Output displacement data
+	void OutputNodalDisplacement();
+
+//!	Output element stresses 
+	void OutputElementStress();
+
+//!	Print total system data
+	void OutputTotalSystemData();
+
+//! Overload the operator <<
+	template <typename T>
+	COutputter& operator<<(const T& item) 
+	{
+		std::cout << item;
+		OutputFile << item;
+		return *this;
+	}
+
+	typedef std::basic_ostream<char, std::char_traits<char> > CharOstream;
+	COutputter& operator<<(CharOstream& (*op)(CharOstream&)) 
+	{
+		op(std::cout);
+		op(OutputFile);
+		return *this;
+	}
+
+#ifdef _DEBUG_
+
+//!	Print banded and full stiffness matrix for debuging
+	void PrintStiffnessMatrix();
+
+//!	Print address of diagonal elements for debuging
+	void PrintDiagonalAddress();
+
+//!	Print column heights for debuging
+	void PrintColumnHeights();
+
+//!	Print displacement vector for debuging
+	void PrintDisplacement();
+
+#endif
+
 };
