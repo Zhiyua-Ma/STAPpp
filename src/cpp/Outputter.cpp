@@ -86,11 +86,13 @@ void COutputter::OutputNodeInfo()
 	unsigned int NUMEG = FEMData->GetNUMEG();
 	unsigned int NLCASE = FEMData->GetNLCASE();
 	unsigned int MODEX = FEMData->GetMODEX();
+	unsigned int DIMENSION = FEMData->GetDimension();
 
-	*this << "      NUMBER OF NODAL POINTS . . . . . . . . . . (NUMNP)  =" << setw(6) << NUMNP << endl;
-	*this << "      NUMBER OF ELEMENT GROUPS . . . . . . . . . (NUMEG)  =" << setw(6) << NUMEG << endl;
-	*this << "      NUMBER OF LOAD CASES . . . . . . . . . . . (NLCASE) =" << setw(6) << NLCASE << endl;
-	*this << "      SOLUTION MODE  . . . . . . . . . . . . . . (MODEX)  =" << setw(6) << MODEX << endl;
+	*this << "      NUMBER OF NODAL POINTS . . . . . . . . . . (NUMNP)    =" << setw(6) << NUMNP << endl;
+	*this << "      NUMBER OF ELEMENT GROUPS . . . . . . . . . (NUMEG)    =" << setw(6) << NUMEG << endl;
+	*this << "      NUMBER OF LOAD CASES . . . . . . . . . . . (NLCASE)   =" << setw(6) << NLCASE << endl;
+	*this << "      SOLUTION MODE  . . . . . . . . . . . . . . (MODEX)    =" << setw(6) << MODEX << endl;
+	*this << "      PROBLEM DIMENSION. . . . . . . . . . . . . (DIMENSION)=" << setw(6) << DIMENSION << endl;
 	*this << "         EQ.0, DATA CHECK" << endl
 		  << "         EQ.1, EXECUTION" << endl
 		  << endl;
@@ -161,6 +163,9 @@ void COutputter::OutputElementInfo()
 			case ElementTypes::Bar: // Bar element
 				OutputBarElements(EleGrp);
 				break;
+			case ElementTypes::Q4:  // Q4 element
+				OutputQ4Elements(EleGrp);
+				break;
 		    default:
 		        *this << ElementType << " has not been implemented yet." << endl;
 		        break;
@@ -168,6 +173,52 @@ void COutputter::OutputElementInfo()
 	}
 }
 //	Output bar element data
+
+void COutputter::OutputQ4Elements(unsigned int EleGrp)
+{
+	CDomain* FEMData = CDomain::GetInstance();
+
+	CElementGroup& ElementGroup = FEMData->GetEleGrpList()[EleGrp];
+	unsigned int NUMMAT = ElementGroup.GetNUMMAT();
+	*this << " M A T E R I A L   D E F I N I T I O N" << endl
+		<< endl;
+	*this << " NUMBER OF DIFFERENT SETS OF MATERIAL" << endl;
+	*this << " AND CROSS-SECTIONAL  CONSTANTS  . . . .( NPAR(3) ) . . =" << setw(5) << NUMMAT
+		<< endl
+		<< endl;
+
+	*this << "  SET       YOUNG'S     CROSS-SECTIONAL" << endl
+		  << " NUMBER     MODULUS       THICKNESS" << endl
+		  << "               E              t" << endl;
+
+	*this << setiosflags(ios::scientific) << setprecision(5);
+
+	//	Loop over for all property sets
+	for (unsigned int mset = 0; mset < NUMMAT; mset++)
+	{
+		*this << setw(5) << mset + 1;
+		ElementGroup.GetMaterial(mset).Write(*this);
+	}
+
+	*this << endl << endl
+		<< " E L E M E N T   I N F O R M A T I O N" << endl;
+
+	*this << " ELEMENT     NODE     NODE     NODE     NODE       MATERIAL" << endl
+		<< " NUMBER-N      N1       N2       N3       N4       SET NUMBER" << endl;
+
+	unsigned int NUME = ElementGroup.GetNUME();
+
+	//	Loop over for all elements in group EleGrp
+	for (unsigned int Ele = 0; Ele < NUME; Ele++)
+	{
+		*this << setw(5) << Ele + 1;
+		ElementGroup[Ele].Write(*this);
+	}
+
+	*this << endl;
+
+}
+
 void COutputter::OutputBarElements(unsigned int EleGrp)
 {
 	CDomain* FEMData = CDomain::GetInstance();
@@ -295,9 +346,24 @@ void COutputter::OutputElementStress()
 				}
 
 				*this << endl;
-
 				break;
+			case ElementTypes::Q4:
+				*this << "  ELEMENT       STRESSx       STRESSy        STRESSxy" << endl
+					<< "  NUMBER" << endl;
+				double Stress[3];
 
+				for (unsigned int Ele = 0; Ele < NUME; Ele++)
+				{
+					CElement& Element = EleGrp[Ele];
+					Element.ElementStress(Stress, Displacement);
+
+					Q4Material& material = *dynamic_cast<Q4Material*>(Element.GetElementMaterial());
+					//stress * material.Area
+					*this << setw(5) << Ele + 1 << setw(22) << Stress[0] << setw(15) << Stress[1] << setw(15) << Stress[2] << endl;
+				}
+
+				*this << endl;
+				break;
 			default: // Invalid element type
 				cerr << "*** Error *** Elment type " << ElementType
 					<< " has not been implemented.\n\n";
